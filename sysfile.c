@@ -52,6 +52,19 @@ fdalloc(struct file *f)
   return -1;
 }
 
+// Weird utility function for keeping track of the
+// number of times read syscall has been called.
+// A static variable was used to keep track of the
+// number times the function has been called.
+// The paramenter inc is used to read the count w/o
+// incrementing the value or increment the value.
+static int
+increment_readcount(int inc) {
+  static int readcount = 0;
+  readcount += inc;
+  return readcount;
+}
+
 int
 sys_dup(void)
 {
@@ -73,6 +86,7 @@ sys_read(void)
   int n;
   char *p;
 
+  increment_readcount(1);
   if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argptr(1, &p, n) < 0)
     return -1;
   return fileread(f, p, n);
@@ -441,4 +455,10 @@ sys_pipe(void)
   fd[0] = fd0;
   fd[1] = fd1;
   return 0;
+}
+
+int
+sys_getreadcount(void)
+{
+  return increment_readcount(0);
 }
